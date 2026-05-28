@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/Apps/">
+    <Project Path="Apps/RobinProcessStartApp/RobinProcessStartApp.csproj" Id="cc6b2811-5edc-4bdd-88f6-07c458caee65" />
+  </Folder>
+  <Folder Name="/Apps/Common/">
+    <Project Path="Apps/Common/DataSearchAlgorithmApp/DataSearchAlgorithmApp.csproj" Id="d634f06c-c987-4be0-9e6e-ea0325b09d43" />
+    <Project Path="Apps/Common/FindAndFixErrors1_6App/FindAndFixErrors1_6App.csproj" Id="39873f94-e472-4386-a93f-6b72fcffe193" />
+    <Project Path="Apps/Common/FindAndFixErrors7App/FindAndFixErrors7App.csproj" Id="fcf5432a-8c55-4442-997b-d29b7d30ab04" />
+  </Folder>
+  <Folder Name="/Apps/ConvertingPaymentRegister/Libs/">
+    <Project Path="Apps/ConvertingPaymentRegister/Libs/PaymentCsvLib/PaymentCsvLib.csproj" Id="47dcfbd0-7312-435e-9012-ece01f413cf7" />
+  </Folder>
+  <Folder Name="/Apps/ConvertingTranscription/">
+    <Project Path="Apps/ConvertingTranscription/MailTableReader/MailTableReader.csproj" Id="aacae618-e085-4b26-bea3-a1138ff7f593" />
+  </Folder>
+  <Folder Name="/Apps/ConvertingPaymentRegister/">
+    <Project Path="Apps/ConvertingPaymentRegister/FillCsvTableApp/FillCsvTableApp.csproj" Id="5df8300e-2f5e-4b17-bff6-baccc3ae04f1" />
+    <Project Path="Apps/ConvertingPaymentRegister/FillingTemplate/FillingTemplate.csproj" Id="f7611f05-1ae0-4e30-88c0-a029a9cf2424" />
+    <Project Path="Apps/ConvertingPaymentRegister/ProcessRawTable/ProcessRawTable.csproj" Id="cfe50995-355a-4bd1-ba8a-522f3666e87b" />
+  </Folder>
+  <Folder Name="/Apps/EqualizingDz/">
+    <Project Path="Apps/EqualizingDz/FBL5H_ParsingApp/FBL5H_ParsingApp.csproj" Id="329919d5-3da5-4702-a402-d61b3df6596d" />
+  </Folder>
+  <Folder Name="/Libs/">
+    <Project Path="Libs/CommonLib/CommonLib.csproj" Id="0bac3541-d306-4037-825b-eb7d5150c7f3" />
+    <Project Path="Libs/CsvParsing/CsvParsing.csproj" Id="8aeb4887-636b-484b-b7c7-8e4c87e1e2a5" />
+    <Project Path="Libs/TxtTableParsing/TxtTableParsing.csproj" Id="c5aec4e4-b8d0-4a95-b76e-1418522856f5" />
+    <Project Path="Libs/XmlParser/XmlParser.csproj" Id="3e43029e-13df-4fc7-a5e4-82da25558c0f" />
+  </Folder>
+</Solution>

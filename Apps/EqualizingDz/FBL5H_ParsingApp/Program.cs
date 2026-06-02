@@ -1,4 +1,4 @@
-﻿using CommonLib;
+using CommonLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

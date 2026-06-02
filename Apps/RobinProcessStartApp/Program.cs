@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -213,15 +213,14 @@ namespace RobinProcessStartApp
 
             if (trimmedOutput.StartsWith(resultPrefix, StringComparison.OrdinalIgnoreCase))
             {
+                // Как раньше — отрезаем префикс
                 string resultValue = trimmedOutput.Substring(resultPrefix.Length);
-                Console.WriteLine(output);
-
-                if (TryExtractSingleElement(resultValue, out string singleValue))
-                {
-                    resultDict[ParametersName.ResultPath] = singleValue;
-                }
-                else
-                    resultDict[ParametersName.ResultJson] = resultValue;
+                AssignResult(resultValue, resultDict);
+            }
+            else if (LooksLikeJson(trimmedOutput))
+            {
+                // JSON пришёл без префикса — всё равно считаем успешным результатом
+                AssignResult(trimmedOutput, resultDict);
             }
             else
             {
@@ -229,13 +228,33 @@ namespace RobinProcessStartApp
             }
         }
 
+        /// <summary>Проверяет, похожа ли строка на JSON-объект или массив</summary>
+        private static bool LooksLikeJson(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            char first = s.TrimStart()[0];
+            return first == '{' || first == '[';
+        }
+
+        /// <summary>Разбор значения и заполнение словаря</summary>
+        private static void AssignResult(string resultValue, Dictionary<string, object> resultDict)
+        {
+            Console.WriteLine(resultValue);
+
+            if (TryExtractSingleElement(resultValue, out string singleValue))
+                resultDict[ParametersName.ResultPath] = singleValue;
+
+            resultDict[ParametersName.ResultJson] = resultValue;
+        }
+
         private static bool TryExtractSingleElement(string resultValue, out string singleValue)
         {
             singleValue = resultValue;
-            if (string.IsNullOrWhiteSpace(resultValue)) return true;
+            if (string.IsNullOrWhiteSpace(resultValue)) return false;
 
             string trimmed = resultValue.Trim();
 
+            // 1. Если это JSON-массив [...]
             if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
             {
                 try
@@ -246,7 +265,8 @@ namespace RobinProcessStartApp
                         var serializer = new DataContractJsonSerializer(typeof(string[]));
                         var arr = serializer.ReadObject(stream) as string[];
 
-                        if (arr != null && arr.Length == 1)
+                        // Если в массиве 1 элемент и он является путём
+                        if (arr != null && arr.Length == 1 && IsPathLike(arr[0]))
                         {
                             singleValue = arr[0];
                             return true;
@@ -260,6 +280,43 @@ namespace RobinProcessStartApp
                 }
             }
 
+            // 2. Если это JSON-объект {...}
+            if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
+            {
+                try
+                {
+                    var bytes = Encoding.UTF8.GetBytes(trimmed);
+                    using (var stream = new MemoryStream(bytes))
+                    {
+                        // DataContractJsonSerializer умеет десериализовать объекты в Dictionary
+                        var serializer = new DataContractJsonSerializer(typeof(Dictionary<string, string>));
+                        var dict = serializer.ReadObject(stream) as Dictionary<string, string>;
+
+                        // Проверяем: ровно 1 пара и значение является путём
+                        if (dict != null && dict.Count == 1)
+                        {
+                            var kvp = dict.First();
+                            if (IsPathLike(kvp.Value))
+                            {
+                                singleValue = kvp.Value;
+                                return true;
+                            }
+                        }
+                        // Если пар больше одной или значение не путь — возвращаем false
+                        // и JSON целиком пойдет в ResultJson
+                        return false;
+                    }
+                }
+                catch
+                {
+                    // Если JSON сложной структуры (вложенные объекты), десериализация в 
+                    // Dictionary<string, string> упадет, и мы уйдем в catch — это нормально,
+                    // значит это точно не 1 пара ключ-значение
+                    return false;
+                }
+            }
+
+            // 3. Если это просто строка в кавычках "..."
             if (trimmed.StartsWith("\"") && trimmed.EndsWith("\""))
             {
                 try
@@ -270,7 +327,7 @@ namespace RobinProcessStartApp
                         var serializer = new DataContractJsonSerializer(typeof(string));
                         var str = serializer.ReadObject(stream) as string;
 
-                        if (str != null)
+                        if (str != null && IsPathLike(str))
                         {
                             singleValue = str;
                             return true;
@@ -280,7 +337,29 @@ namespace RobinProcessStartApp
                 catch { }
             }
 
-            return true;
+            // Во всех остальных случаях (включая обычный текст без кавычек) 
+            // считаем, что это не единичный путь
+            return false;
+        }
+
+        /// <summary>
+        /// Проверяет, похожа ли строка на путь к файлу или папке.
+        /// Существование файла/папки на диске НЕ проверяется.
+        /// </summary>
+        private static bool IsPathLike(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+
+            // Отсекаем строки, содержащие недопустимые символы пути
+            if (value.IndexOfAny(Path.GetInvalidPathChars()) >= 0) return false;
+
+            // Абсолютный путь (C:\, D:/, \\server\share)
+            if (Path.IsPathRooted(value)) return true;
+
+            // Относительный путь (содержит слэши, например folder\file.txt)
+            if (value.Contains("\\") || value.Contains("/")) return true;
+
+            return false;
         }
 
         #endregion

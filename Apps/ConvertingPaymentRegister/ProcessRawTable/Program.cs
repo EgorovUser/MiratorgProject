@@ -1,4 +1,4 @@
-﻿using CommonLib;
+using CommonLib;
 using CsvParsing;
 using ProcessRawTable;
 using System;
@@ -16,12 +16,12 @@ namespace ProcessRawTable
     {
         static void Main(string[] args)
         {
-            if (args.Length < 6)
+            if (args.Length < 5)
                 throw new ArgumentException(
                     "Ожидаются аргументы: [0] путь к csv-файлу, " +
                     "[1] путь до папки выхода (или пусто — перезапись), " +
                     "[2] разделитель, [3] код кредитора, " +
-                    "[4] номер взаимозачёта, [5] год из SAP, " +
+                    "[4] номер взаимозачёта, [5] год из SAP (опционально), " +
                     "[6] сумма из SAP (опционально).");
 
             IDictionary<string, object> parameters = new Dictionary<string, object>()
@@ -30,10 +30,10 @@ namespace ProcessRawTable
                 { Parameters.OutputDirPath, args[1] },
                 { Parameters.Delimiter, args[2] },
                 { Parameters.CreditorCode, args[3] },
-                { Parameters.OffsetNumber, args[4] },
-                { Parameters.SapYear, args[5] }
+                { Parameters.OffsetNumber, args[4] }
             };
-
+            if (args.Length > 5)
+                parameters[Parameters.SapYear] = args[5];
             if (args.Length > 6)
                 parameters[Parameters.SapSum] = args[6];
 
@@ -70,9 +70,13 @@ namespace ProcessRawTable
             char delimiter = DictProcessor.ExtractDelimiter(parameters, null);
             string creditorCode = DictProcessor.ExtractRequiredString(parameters, Parameters.CreditorCode);
             string offsetNumber = DictProcessor.ExtractRequiredString(parameters, Parameters.OffsetNumber);
-            string sapYear = DictProcessor.ExtractRequiredString(parameters, Parameters.SapYear);
+            string sapYear = DictProcessor.ExtractOptionalString(parameters, Parameters.SapYear);
             string sapSumStr = DictProcessor.ExtractOptionalString(parameters, Parameters.SapSum);
 
+            if (!string.IsNullOrWhiteSpace(sapYear))
+            {
+                sapYear = "";
+            }
             decimal sapSum = 0;
             if (!string.IsNullOrWhiteSpace(sapSumStr))
             {
@@ -183,6 +187,11 @@ namespace ProcessRawTable
             // -----------------------------------------------------------------
             //  6. Формирование результата
             // -----------------------------------------------------------------
+
+            DateTime now = DateTime.Now;
+            DateTime resultDate = new DateTime(now.Year, now.Month, 1).AddMonths(-3);
+            string formattedDate = resultDate.ToString("dd.MM.yyyy");
+
             var docList = parseResult.Rows.Select(r => new Dictionary<string, object>
             {
                 { "DocNumber", r.DocNumber ?? "" },
@@ -191,6 +200,7 @@ namespace ProcessRawTable
             }).ToList();
 
             result["Status"] = "OK";
+            result["newDate"] = formattedDate;
             result["TotalRows"] = parseResult.TotalRows;
             result["SkippedRows"] = parseResult.SkippedRows;
             result["TotalSum"] = DateHelper.ToStringDecimal(parseResult.TotalSum, 2);

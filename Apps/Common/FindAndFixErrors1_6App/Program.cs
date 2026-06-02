@@ -1,8 +1,9 @@
-﻿using CommonLib;
+using CommonLib;
 using CsvParsing;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace FindAndFixErrors1_6App
     public static class Parameters
     {
         public const string InputFilePath = "inputFilePath";
-        public const string OutputFilePath = "outputFilePath";
+        public const string OutputDir = "outputDir";
         public const string Delimiter = "delimiter";
 
         public const string Result = "result";
@@ -27,6 +28,7 @@ namespace FindAndFixErrors1_6App
     public class Config
     {
         public string InputFilePath { get; }
+        public string OutputDir { get; }
         public string OutputFilePath { get; }
         public char Delimiter { get; }
         public string DebCode { get; set; }
@@ -34,8 +36,8 @@ namespace FindAndFixErrors1_6App
         public Config(IDictionary<string, object> parameters)
         {
             InputFilePath = DictProcessor.ExtractRequiredString(parameters, Parameters.InputFilePath);
-            OutputFilePath = DictProcessor.ExtractRequiredString(parameters, Parameters.OutputFilePath);
-
+            OutputDir = DictProcessor.ExtractRequiredString(parameters, Parameters.OutputDir);
+            OutputFilePath = Path.Combine(OutputDir, Path.GetFileName(InputFilePath));
             Delimiter = DictProcessor.ExtractDelimiter(parameters, Parameters.Delimiter);
         }
     }
@@ -49,7 +51,7 @@ namespace FindAndFixErrors1_6App
             IDictionary<string, object> parameters = new Dictionary<string, object>()
             {
                 { Parameters.InputFilePath, args[0] },
-                { Parameters.OutputFilePath, args[1] },
+                { Parameters.OutputDir, args[1] },
                 { Parameters.Delimiter, args[2] }
             };
 
@@ -67,17 +69,6 @@ namespace FindAndFixErrors1_6App
             var table = engine.ReadCsv(config.InputFilePath, config.Delimiter);
 
             config.DebCode = table.GetCommonValue(1);
-
-            // 4.4.4 - 1
-            table.NormalizeNumbers(4);
-            table.NormalizeNumbers(7);
-            table.NormalizeNumbers(8);
-
-            engine.WriteCsv(table, config.OutputFilePath, config.Delimiter);
-
-            // 4.4.4 - 2
-            table.NormalizeDates(3);
-            table.NormalizeDates(6);
 
             engine.WriteCsv(table, config.OutputFilePath, config.Delimiter);
 

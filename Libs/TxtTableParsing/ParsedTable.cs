@@ -16,7 +16,7 @@ namespace TxtTableParsing
         public IReadOnlyList<string> Headers { get; }
 
         /// <summary>Строки данных (все, прошедшие фильтрацию)</summary>
-        public IReadOnlyList<Row> Rows { get; }
+        public List<Row> Rows { get; }
 
         /// <summary>Индекс строки заголовков в исходном файле (0-based)</summary>
         public int HeaderRowIndex { get; }
@@ -31,7 +31,7 @@ namespace TxtTableParsing
             string sourceFilePath)
         {
             Headers = Array.AsReadOnly(headers ?? Array.Empty<string>());
-            Rows = rows?.AsReadOnly() ?? new List<Row>().AsReadOnly();
+            Rows = rows ?? new List<Row>();
             HeaderRowIndex = headerRowIndex;
             SourceFilePath = sourceFilePath ?? string.Empty;
         }

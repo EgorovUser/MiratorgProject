@@ -47,6 +47,11 @@ namespace TxtTableParsing
                     return _values[index]?.Trim() ?? string.Empty;
                 return string.Empty;
             }
+            set
+            {
+                if (index >= 0 && index < _values.Length)
+                    _values[index] = value;
+            }
         }
 
         /// <summary>Количество полей в строке</summary>

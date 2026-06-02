@@ -234,7 +234,7 @@ namespace DataSearchAlgorithmApp
 
                 // 2. Бизнес-логика (фильтрация, группировка)
                 resultDict = ProcessTxt(table, resultDict, parseVariant, csvTable);
-
+                
             }
             catch (Exception ex)
             {
@@ -320,16 +320,20 @@ namespace DataSearchAlgorithmApp
         private static void ProcessDateAndSummSF(ParsedTable table, IDictionary<string, object> parameters, CsvTable csvTable)
         {
             Dictionary<string, object> keyValuePairs = new Dictionary<string, object>();
-
-            foreach (var row in csvTable.Rows)
+            List<int> rowsToDelete = new List<int>();
+            for (int i = 0; i < csvTable.Rows.Count; i++) 
             {
+                var row = csvTable.Rows[i];
                 string searchValue = row[5];
 
                 var filteredByDocLink = table.Where(r =>
                     r.EqualsValue(ColumnsV2.DocumentLink, searchValue)).ToList();
 
                 if (filteredByDocLink.Count == 0)
+                {
+                    rowsToDelete.Add(i);
                     continue;
+                }
 
                 var filteredBySF = table.Where(r =>
                     r.EqualsValue(ColumnsV2.DocumentSF, filteredByDocLink[0][ColumnsV2.DocumentSF])).ToList();
@@ -351,20 +355,17 @@ namespace DataSearchAlgorithmApp
                         $"(счёт-фактура \"{filteredByDocLink[0][ColumnsV2.DocumentSF]}\").");
 
                 Row firstRow = filteredFromCL[0];
-                string year = DateTime.ParseExact(firstRow[ColumnsV2.DocumentDate], "dd.MM.yyyy", null).Year.ToString();
-
                 Dictionary<string, object> innerDict = new Dictionary<string, object>
                 {
                     { Parameters.ResultDocumentSum, DateHelper.ToStringDecimal(sum) },
-                    { Parameters.ResultDocumentNumber, firstRow[ColumnsV2.DocumentNumber] },
-                    { Parameters.ResultDocumentDate, year }
+                    { Parameters.ResultDocumentDate, firstRow[ColumnsV2.DocumentDate] }
                 };
 
                 keyValuePairs[searchValue] = innerDict;
-                row[5] = firstRow[ColumnsV2.DocumentNumber];
-                row[6] = year;
+                row[6] = firstRow[ColumnsV2.DocumentDate];
                 row[8] = DateHelper.ToStringDecimal(sum);
             }
+            csvTable.DeleteRows(rowsToDelete);
 
             if (keyValuePairs.Count == 0)
                 throw new InvalidOperationException(
